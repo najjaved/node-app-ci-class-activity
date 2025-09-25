@@ -27,13 +27,15 @@ jobs:
       - name: Run unit tests
         run: npm test
         continue-on-error: true # Avoid breaking if no tests exist
-
+        
+      # # Adds build/ folder if it exists
       - name: Archive build artifacts
         run: |
           mkdir -p artifacts
-          cp -r package.json package-lock.json artifacts/
+          [ -f package.json ] && cp package.json artifacts/
+          [ -f package-lock.json ] && cp package-lock.json artifacts/
           [ -d build ] && cp -r build artifacts/
-        # Adds build/ folder if it exists
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
