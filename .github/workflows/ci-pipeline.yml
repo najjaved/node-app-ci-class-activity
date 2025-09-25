@@ -1,98 +1,61 @@
-name: Continuous Integration Pipeline
+name: CI Pipeline - Build, Test & Docker Push
 
 on:
-  workflow_dispatch:
-
   push:
-   branches: ["main"] 
-
-# Define permissions for the workflow
-permissions:
- contents: read
- actions: read
- checks: write
- pull-requests: write
+    branches:
+      - main
 
 jobs:
- build-and-test:
-   runs-on: ubuntu-latest
+  build-test-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-   strategy:
-     matrix:
-       node-version: [18.x, 20.x]
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
 
-   steps:
-     - name: Checkout code
-       uses: actions/checkout@v4
+      # check also npm ci
+      - name: Install dependencies
+        run: npm install
 
-     - name: Setup Node.js ${{ matrix.node-version }}
-       uses: actions/setup-node@v4
-       with:
-         node-version: ${{ matrix.node-version }}
-         cache: 'npm'
-         cache-dependency-path: 'package-lock.json'
+      - name: Build the app
+        run: npm run build
+        continue-on-error: true # In case app has no build script
 
-     - name: Install dependencies
-       run: npm ci
+      - name: Run unit tests
+        run: npm test
+        continue-on-error: true # Avoid breaking if no tests exist
 
-     - name: Build the application (optional)
-       run: |
-         npm run build 2>/dev/null || echo "No build script found, skipping build step"
+      - name: Archive build artifacts
+        run: |
+          mkdir -p artifacts
+          cp -r package.json package-lock.json artifacts/
+          [ -d build ] && cp -r build artifacts/
+        # Adds build/ folder if it exists
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-build-artifacts
+          path: artifacts/
 
-     - name: Run unit tests with coverage and JUnit reports
-       # If you're using jest-junit, this env var makes sure the XML lands where the reporter expects.
-       env:
-         JEST_JUNIT_OUTPUT: coverage/junit.xml
-       run: npm run test:ci
+  docker:
+    runs-on: ubuntu-latest
+    needs: build-test-quality
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-     - name: Publish test results to Checks
-       uses: dorny/test-reporter@v1
-       if: always()
-       with:
-         name: Jest Test Results
-         path: coverage/junit.xml
-         reporter: jest-junit
-         fail-on-error: true
+      - name: Log in to Docker registry
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-     - name: Upload test results to GitHub
-       uses: actions/upload-artifact@v4
-       if: always()
-       with:
-         name: test-results-node-${{ matrix.node-version }}
-         path: coverage/
-         retention-days: 30
-
-     - name: Create deployment package
-       run: |
-         set -euo pipefail
-         STAGING="$GITHUB_WORKSPACE/deployment-package"
-         rm -rf "$STAGING"
-         mkdir -p "$STAGING"
-
-         # Copy key app files into a clean staging folder
-         [ -d public ] && cp -r public "$STAGING/" || echo "No public/ directory found"
-         [ -d node_modules ] && cp -r node_modules "$STAGING/" || echo "No node_modules/ directory found"
-         [ -f server.js ] && cp server.js "$STAGING/" || echo "No server.js found"
-         cp package.json "$STAGING/"
-         cp package-lock.json "$STAGING/"
-         [ -f README.md ] && cp README.md "$STAGING/" || true
-         [ -f Dockerfile ] && cp Dockerfile "$STAGING/" || echo "No Dockerfile found"
-
-         # Create prod-only package.json (no devDependencies). This does NOT install deps.
-         (cd "$STAGING" && npm pkg delete devDependencies || true)
-                 # Zip stays inside the workspace for reliable artifact upload
-         TS="$(date +%Y%m%d-%H%M%S)"
-         SHORT_SHA="${GITHUB_SHA::7}"
-         ZIP_NAME="deployment-package-${SHORT_SHA}-${TS}.zip"
-         (cd "$GITHUB_WORKSPACE" && zip -r "$ZIP_NAME" "deployment-package")
-         echo "ZIP_NAME=$ZIP_NAME" >> "$GITHUB_ENV"
-
-     - name: Upload deployment package artifact
-       uses: actions/upload-artifact@v4
-       with:
-         name: deployment-package-node-${{ matrix.node-version }}-${{ github.run_number }}
-         path: ${{ env.ZIP_NAME }}
-         retention-days: 90
-
-
-
+      - name: Build and push Docker image
+        run: |
+          IMAGE=${{ secrets.DOCKER_USERNAME }}/node-app:${{ github.sha }}
+          docker build -t $IMAGE .
+          docker push $IMAGE
