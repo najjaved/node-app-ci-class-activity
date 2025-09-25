@@ -37,14 +37,27 @@ Create a GitHub Actions workflow file (`.github/workflows/cd-pipeline.yml`) that
 Make sure the following secrets are stored in GitHub:
 
 - `DOCKER_USERNAME`  
-- `DOCKER_PASSWORD`  
+- `DOCKER_PASSWORD`
+- `AZURE_CREDENTIALS`
+   (for example: create one secret: AZURE_CREDENTIALS
+value: 
+{
+  "clientId": "your_cleind_id_value",
+  "clientSecret": "your_app_secret",
+  "subscriptionId": "your_azure_subscription_id",
+  "tenantId": "id_valeu"
+})
+- `AZURE_VM_NAME`
+- `AZURE_VM_RESOURCE_GROUP`  
 - `AZURE_VM_IP`  
 - `AZURE_VM_USER` 
-- `AZURE_VM_SSH_KEY` (private key for SSH authentication)
-    - Hint: Copy your private key content (~/.ssh/id_rsa) and paste it as the secret value.
+- `AZURE_VM_SSH_KEY` (private key for SSH authentication if using Github Action appleboy)
+    - Hint: Copy your private key content (~/.ssh/vm_key.pem) and paste it as the secret value.
 
 ---
 
 **Deliverables:**
 - `ci-pipeline.yml` (build, test, docker push)  
 - `cd-pipeline.yml` (deployment to Azure VM)  
+
+Now after automated deployment, you can access your app in your browser via http://<your_VM_public_IP>:80
