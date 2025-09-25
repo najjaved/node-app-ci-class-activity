@@ -17,10 +17,12 @@ jobs:
       
       - name: Install Docker
         run: |
-          sudo apt-get update
-          sudo apt-get install -y docker.io
-          sudo usermod -aG docker $USER && newgrp docker
-          docker --version
+          sudo apt-get remove -y docker docker-engine docker.io containerd runc || true
+          curl -fsSL https://get.docker.com -o get-docker.sh
+          sudo sh get-docker.sh
+          sudo usermod -aG docker azureuser
+          sudo systemctl enable docker
+          sudo systemctl start docker
    
       - name: Deploy to Azure VM via SSH
         uses: appleboy/ssh-action@v1.2.2
