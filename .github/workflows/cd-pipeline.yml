@@ -25,17 +25,19 @@ jobs:
           IMAGE=${{ secrets.DOCKER_USERNAME }}/node-app:${{ github.sha }}
           echo "Deploying Docker image to Azure VM..."
           
-          # Use Azure Run Command to execute Docker commands on VM instead of SSH
+          # Use Azure Run Command to execute Docker commands on VM
           az vm run-command invoke \
             --name ${{ secrets.AZURE_VM_NAME }} \
             --resource-group ${{ secrets.AZURE_VM_RESOURCE_GROUP }} \
             --command-id RunShellScript \
-            --scripts ''
-              echo "Pulling latest Docker image..."
-              sudo docker pull '"$IMAGE"'
-              echo "Stopping old container..."
+            --scripts "
+              echo 'Pulling latest Docker image...'
+              sudo docker pull $IMAGE
+              echo 'Stopping old container...'
               sudo docker stop node-app || true
               sudo docker rm node-app || true
-              echo "Running new container..."
-              sudo docker run -d --name node-app -p 80:3000 '"$IMAGE"'
+              echo 'Running new container...'
+              sudo docker run -d --name node-app -p 80:3000 $IMAGE
+              echo 'Deployment completed successfully!'
+            "
   
