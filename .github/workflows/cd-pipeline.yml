@@ -14,15 +14,6 @@ jobs:
       - name: Debug host value
         run: |
           echo "Host: ${{ secrets.AZURE_VM_IP }}"
-      
-      - name: Install Docker
-        run: |
-          sudo apt-get remove -y docker docker-engine docker.io containerd runc || true
-          curl -fsSL https://get.docker.com -o get-docker.sh
-          sudo sh get-docker.sh
-          sudo usermod -aG docker azureuser
-          sudo systemctl enable docker
-          sudo systemctl start docker
    
       - name: Deploy to Azure VM via SSH
         uses: appleboy/ssh-action@v1.2.2
@@ -33,9 +24,9 @@ jobs:
           script: |
             IMAGE=${{ secrets.DOCKER_USERNAME }}/node-app:${{ github.sha }}
             echo "Pulling latest Docker image..."
-            docker pull $IMAGE
+            sudo docker pull $IMAGE
             echo "Stopping old container..."
-            docker stop node-app || true
-            docker rm node-app || true
+            sudo docker stop node-app || true
+            sudo docker rm node-app || true
             echo "Running new container..."
-            docker run -d --name node-app -p 80:3000 $IMAGE
+            sudo docker run -d --name node-app -p 80:3000 $IMAGE
