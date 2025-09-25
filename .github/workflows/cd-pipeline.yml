@@ -14,7 +14,14 @@ jobs:
       - name: Debug host value
         run: |
           echo "Host: ${{ secrets.AZURE_VM_IP }}"
-          
+      
+      - name: Install Docker
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker.io
+          sudo usermod -aG docker $USER && newgrp docker
+          docker --version
+   
       - name: Deploy to Azure VM via SSH
         uses: appleboy/ssh-action@v1.2.2
         with:
