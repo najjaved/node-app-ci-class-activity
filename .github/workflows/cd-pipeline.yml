@@ -15,19 +15,27 @@ jobs:
         run: |
           echo "Host: ${{ secrets.AZURE_VM_IP }}"
    
-      - name: Deploy to Azure VM via SSH
-        uses: appleboy/ssh-action@v1.2.2
+      - name: Azure Login (Service Principal)
+        uses: azure/login@v2
         with:
-          host: ${{ secrets.AZURE_VM_IP }}
-          username: ${{ secrets.AZURE_VM_USER }}
-          key: ${{ secrets.AZURE_VM_SSH_KEY }}
-          script: |
-            export PATH=$PATH:/usr/bin
-            IMAGE=${{ secrets.DOCKER_USERNAME }}/node-app:${{ github.sha }}
-            echo "Pulling latest Docker image..."
-            sudo docker pull $IMAGE
-            echo "Stopping old container..."
-            sudo docker stop node-app || true
-            sudo docker rm node-app || true
-            echo "Running new container..."
-            sudo docker run -d --name node-app -p 80:3000 $IMAGE
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      
+      - name: Pull and run Docker on Azure VM
+        run: |
+          IMAGE=${{ secrets.DOCKER_USERNAME }}/node-app:${{ github.sha }}
+          echo "Deploying Docker image to Azure VM..."
+          
+          # Use Azure Run Command to execute Docker commands on VM instead of SSH
+          az vm run-command invoke \
+            --name ${{ secrets.AZURE_VM_NAME }} \
+            --resource-group ${{ secrets.AZURE_VM_RESOURCE_GROUP }} \
+            --command-id RunShellScript \
+            --scripts "
+              echo "Pulling latest Docker image..."
+              sudo docker pull $IMAGE
+              echo "Stopping old container..."
+              sudo docker stop node-app || true
+              sudo docker rm node-app || true
+              echo "Running new container..."
+              sudo docker run -d --name node-app -p 80:3000 $IMAGE
+  
