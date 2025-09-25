@@ -32,9 +32,9 @@ jobs:
       - name: Archive build artifacts
         run: |
           mkdir -p artifacts
-          [ -f package.json ] && cp package.json artifacts/
-          [ -f package-lock.json ] && cp package-lock.json artifacts/
-          [ -d build ] && cp -r build artifacts/
+          [ -f package.json ] && cp package.json artifacts/ || true
+          [ -f package-lock.json ] && cp package-lock.json artifacts/ || true
+          [ -d build ] && cp -r build artifacts/ || true
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
