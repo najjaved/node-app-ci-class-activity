@@ -30,12 +30,12 @@ jobs:
             --name ${{ secrets.AZURE_VM_NAME }} \
             --resource-group ${{ secrets.AZURE_VM_RESOURCE_GROUP }} \
             --command-id RunShellScript \
-            --scripts "
+            --scripts ''
               echo "Pulling latest Docker image..."
               sudo docker pull $IMAGE
               echo "Stopping old container..."
               sudo docker stop node-app || true
               sudo docker rm node-app || true
               echo "Running new container..."
-              sudo docker run -d --name node-app -p 80:3000 $IMAGE
+              sudo docker run -d --name node-app -p 80:3000 $IMAGE '
   
