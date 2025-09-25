@@ -5,6 +5,13 @@ on:
     branches:
       - main
 
+# Define permissions for the workflow
+permissions:
+ contents: read
+ actions: read
+ checks: write
+ pull-requests: write
+
 jobs:
   build-test-quality:
     runs-on: ubuntu-latest

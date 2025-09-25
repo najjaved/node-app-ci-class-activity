@@ -39,7 +39,7 @@ Make sure the following secrets are stored in GitHub:
 - `DOCKER_USERNAME`  
 - `DOCKER_PASSWORD`  
 - `AZURE_VM_IP`  
-- `AZURE_VM_USER`  
+- `AZURE_VM_USER` 
 - `AZURE_VM_SSH_KEY` (private key for SSH authentication)
     - Hint: Copy your private key content (~/.ssh/id_rsa) and paste it as the secret value.
 
