@@ -8,11 +8,11 @@ The first pipeline will handle **Build, Test & Docker image creation**, and the 
 ## Task Description
 
 ### Part 1 – CI Pipeline
-Fork the [Node.js App](https://github.com/saurabhd2106/sample-node-app-ci-lab-ih) and create a GitHub Actions workflow file (`.github/workflows/ci-pipeline.yml`) inside:
+Fork the [Node.js App](https://github.com/saurabhd2106/sample-node-app-ci-lab-ih) and create a GitHub Actions workflow file (`.github/workflows/ci-pipeline.yml`) inside. The workflow:
 
-1. **Triggers** on `push` to the `dev` branch. 
+1. **Triggers** on `push` to the `main` branch. 
 2. **Installs Node.js dependencies** and runs `npm test`.
-    - Hint: `npm install` → installs packages from package.json file of the node.js app (check also `npm ci`) & `npm run build` if required.
+    - Hint: `npm install` → installs packages from package.json file of the node.js app (check also `npm ci` for clean install) & `npm run build` if required.
 3. **Builds a Docker image** of the Node.js app.
 4. **Pushes the Docker image** to a container registry (DockerHub or Azure Container Registry).
    - Use **GitHub Secrets** for credentials.
